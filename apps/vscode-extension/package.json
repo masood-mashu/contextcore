@@ -1,0 +1,59 @@
+{
+  "name": "contextcore-vscode",
+  "displayName": "ContextCore",
+  "description": "Live focus, energy and stress state in VS Code",
+  "version": "1.0.0",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "contextcore.showPanel",
+        "title": "ContextCore: Show Context Panel"
+      },
+      {
+        "command": "contextcore.refreshContext",
+        "title": "ContextCore: Refresh Context"
+      },
+      {
+        "command": "contextcore.logMood",
+        "title": "ContextCore: Log Mood"
+      },
+      {
+        "command": "contextcore.setToken",
+        "title": "ContextCore: Set API Token"
+      }
+    ],
+    "configuration": {
+      "title": "ContextCore",
+      "properties": {
+        "contextcore.apiToken": {
+          "type": "string",
+          "default": "cc-dev-token-2024",
+          "description": "Your ContextCore API token"
+        },
+        "contextcore.notifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show focus nudge notifications"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "contextcore.showPanel",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json",
+    "dev": "node ../../node_modules/typescript/bin/tsc -p tsconfig.json --watch"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0"
+  }
+}
