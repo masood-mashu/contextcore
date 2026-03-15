@@ -1,0 +1,20 @@
+{
+  "name": "@contextcore/electron",
+  "version": "1.0.0",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "node ../../node_modules/typescript/bin/tsc",
+    "dev": "node ../../node_modules/typescript/bin/tsc --watch",
+    "start": "electron .",
+    "electron:dev": "npm run build && electron ."
+  },
+  "dependencies": {
+    "@contextcore/shared": "*",
+    "@contextcore/database": "*",
+    "@contextcore/context-engine": "*"
+  },
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "@types/electron": "^1.6.10"
+  }
+}

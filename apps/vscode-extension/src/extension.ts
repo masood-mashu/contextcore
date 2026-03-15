@@ -123,34 +123,26 @@ function checkAndNotify(ctx: ContextResponse): void {
   }
 }
 
-// ─── Mood picker ──────────────────────────────────────────────────────────────
-
 async function openMoodPicker(): Promise<void> {
   const token = vscode.workspace
     .getConfiguration('contextcore')
     .get<string>('apiToken', 'cc-dev-token-2024');
 
-  const moodPick = await vscode.window.showQuickPick([
-    { label: '😩 1 — Rough',  value: 1 },
-    { label: '😔 2 — Low',    value: 2 },
-    { label: '😐 3 — Okay',   value: 3 },
-    { label: '🙂 4 — Good',   value: 4 },
-    { label: '🤩 5 — Great',  value: 5 }
-  ], { placeHolder: 'How do you feel right now?' });
-
+  const moodPick = await vscode.window.showQuickPick(
+    ['😩 1 — Rough', '😔 2 — Low', '😐 3 — Okay', '🙂 4 — Good', '🤩 5 — Great'],
+    { placeHolder: 'How do you feel right now?' }
+  );
   if (!moodPick) return;
+  const mood = parseInt(moodPick.split(' ')[1]);
 
-  const energyPick = await vscode.window.showQuickPick([
-    { label: '💤 1 — Drained', value: 1 },
-    { label: '🪫 2 — Low',     value: 2 },
-    { label: '🔋 3 — Okay',    value: 3 },
-    { label: '⚡ 4 — High',    value: 4 },
-    { label: '🔥 5 — Wired',   value: 5 }
-  ], { placeHolder: 'Energy level?' });
-
+  const energyPick = await vscode.window.showQuickPick(
+    ['💤 1 — Drained', '🪫 2 — Low', '🔋 3 — Okay', '⚡ 4 — High', '🔥 5 — Wired'],
+    { placeHolder: 'Energy level?' }
+  );
   if (!energyPick) return;
+  const energy = parseInt(energyPick.split(' ')[1]);
 
-  await logMood(token, moodPick.value, energyPick.value);
+  await logMood(token, mood, energy);
   vscode.window.setStatusBarMessage('✓ Mood logged to ContextCore', 3000);
 
   // Refresh context after mood is logged

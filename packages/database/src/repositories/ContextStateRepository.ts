@@ -68,6 +68,30 @@ export class ContextStateRepository {
     return values.map((row: any[]) => this.rowToModel(columns, row));
   }
 
+  async getWeeklySummary(): Promise<any[]> {
+  const db = await getDB();
+  const since = Math.floor(Date.now() / 1000) - 7 * 86400;
+  const result = db.exec(`
+    SELECT
+      DATE(ts, 'unixepoch') as day,
+      AVG(focus_score)  as avg_focus,
+      AVG(energy_score) as avg_energy,
+      AVG(stress_score) as avg_stress,
+      MAX(deep_work_minutes_today) as peak_deep_work
+    FROM context_states
+    WHERE ts >= ${since}
+    GROUP BY day
+    ORDER BY day ASC
+  `);
+  if (!result.length) return [];
+  const { columns, values } = result[0];
+  return values.map((row: any[]) => {
+    const obj: any = {};
+    columns.forEach((col, i) => obj[col] = row[i]);
+    return obj;
+  });
+}
+
   private rowToModel(columns: string[], values: any[]): ContextState {
     const obj: any = {};
     columns.forEach((col, i) => obj[col] = values[i]);

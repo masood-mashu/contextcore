@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContextCore</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #080810; --bg2: #0d0d1a; --bg3: #111125;
+      --surface: #161630; --surface2: #1e1e3d;
+      --border:  rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.12);
+      --text:    #e8e8f0; --text2: #9090b0; --text3: #5a5a7a;
+      --accent:  #00f5c4; --accent2: #00c4ff; --warn: #ffc46b;
+      --radius:  12px; --radius-sm: 8px;
+      --mono:    'JetBrains Mono', monospace;
+      --sans:    'Syne', sans-serif;
+    }
+    html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+
+    #app { display:grid; grid-template-columns:220px 1fr; height:100vh; }
+
+    /* Sidebar */
+    #sidebar { background:var(--bg2); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:20px 0; -webkit-app-region:drag; }
+    .logo { display:flex; align-items:center; gap:10px; padding:0 20px 24px; -webkit-app-region:no-drag; }
+    .logo-icon { width:32px; height:32px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .logo-text { font-size:16px; font-weight:800; letter-spacing:-0.3px; }
+    .logo-ver  { font-size:10px; color:var(--text3); font-family:var(--mono); }
+
+    /* Pulse */
+    .pulse { margin:0 20px 20px; padding:12px 14px; background:var(--surface); border-radius:var(--radius-sm); border:1px solid var(--border); -webkit-app-region:no-drag; }
+    .pulse-lbl { font-size:10px; font-family:var(--mono); color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+    .pulse-row { display:flex; align-items:center; gap:8px; }
+    .pulse-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:glow 2s ease-in-out infinite; }
+    @keyframes glow { 0%,100%{box-shadow:0 0 0 0 rgba(0,245,196,.4)} 50%{box-shadow:0 0 0 4px rgba(0,245,196,0)} }
+    .pulse-txt { font-size:13px; font-weight:600; }
+
+    /* Nav */
+    nav { flex:1; padding:0 12px; -webkit-app-region:no-drag; }
+    .nav-sec { font-size:10px; font-family:var(--mono); color:var(--text3); text-transform:uppercase; letter-spacing:1px; padding:0 8px; margin:16px 0 6px; }
+    .nav-item { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:var(--radius-sm); cursor:pointer; color:var(--text2); font-size:13px; font-weight:600; margin-bottom:2px; transition:all .15s; user-select:none; }
+    .nav-item:hover { background:var(--surface); color:var(--text); }
+    .nav-item.active { background:var(--surface); color:var(--accent); }
+    .nav-icon { font-size:15px; width:20px; text-align:center; }
+
+    /* Main */
+    #main { overflow-y:auto; padding:28px 32px; scrollbar-width:thin; scrollbar-color:var(--surface2) transparent; }
+    .page { display:none; } .page.active { display:block; }
+
+    /* Typography */
+    .page-title { font-size:22px; font-weight:800; letter-spacing:-.5px; margin-bottom:6px; }
+    .page-sub   { font-size:13px; color:var(--text2); margin-bottom:28px; }
+    .sec-label  { font-size:11px; font-family:var(--mono); color:var(--text3); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:14px; }
+
+    /* Cards */
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; position:relative; overflow:hidden; transition:border-color .2s; }
+    .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--card-accent, var(--accent)); }
+    .card:hover { border-color:var(--border2); }
+    .card-lbl  { font-size:10px; font-family:var(--mono); color:var(--text3); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+    .card-main { display:flex; align-items:flex-end; gap:10px; margin-bottom:8px; }
+    .card-emoji{ font-size:28px; line-height:1; }
+    .card-val  { font-size:22px; font-weight:800; line-height:1; }
+    .card-score{ font-family:var(--mono); font-size:11px; color:var(--text3); margin-bottom:4px; }
+    .card-sub  { font-size:11px; color:var(--text2); line-height:1.4; }
+    .bar { height:3px; background:var(--surface2); border-radius:2px; margin-top:12px; overflow:hidden; }
+    .bar-fill { height:100%; border-radius:2px; background:var(--card-accent,var(--accent)); transition:width .6s cubic-bezier(.34,1.56,.64,1); }
+
+    /* Timeline */
+    .tl-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:24px; }
+    .tl-chart { height:80px; display:flex; align-items:flex-end; gap:3px; }
+    .tl-bar   { flex:1; border-radius:3px 3px 0 0; min-height:4px; opacity:.8; cursor:pointer; transition:opacity .2s; }
+    .tl-bar:hover { opacity:1; }
+
+    /* Mood page */
+    .mood-sec { margin-bottom:24px; }
+    .mood-lbl { font-size:13px; font-weight:700; color:var(--text2); margin-bottom:12px; }
+    .mood-btns{ display:flex; gap:10px; }
+    .mood-btn { flex:1; padding:14px 8px; background:var(--surface); border:2px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; text-align:center; font-size:22px; transition:all .15s; }
+    .mood-btn:hover { border-color:var(--border2); transform:translateY(-1px); }
+    .mood-btn.sel   { border-color:var(--accent); background:rgba(0,245,196,.08); }
+    .mood-btn span  { display:block; font-size:9px; font-family:var(--mono); color:var(--text3); margin-top:6px; text-transform:uppercase; }
+    textarea { width:100%; max-width:600px; padding:12px 14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:var(--sans); font-size:13px; resize:vertical; min-height:80px; outline:none; transition:border-color .15s; }
+    textarea:focus { border-color:var(--accent); }
+    textarea::placeholder { color:var(--text3); }
+
+    /* Buttons */
+    .btn { padding:10px 20px; border-radius:var(--radius-sm); font-family:var(--sans); font-size:13px; font-weight:700; cursor:pointer; border:none; outline:none; transition:all .15s; }
+    .btn-primary { background:var(--accent); color:var(--bg); }
+    .btn-primary:hover { background:#00ddb0; transform:translateY(-1px); }
+    .btn-ghost { background:transparent; color:var(--text2); border:1px solid var(--border); }
+    .btn-ghost:hover { background:var(--surface); color:var(--text); }
+
+    /* Mirror */
+    .mirror-card { background:linear-gradient(135deg,var(--surface) 0%,rgba(0,245,196,.05) 100%); border:1px solid rgba(0,245,196,.2); border-radius:var(--radius); padding:24px; margin-bottom:24px; }
+    .mirror-hdr  { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+    .mirror-txt  { font-size:14px; color:var(--text2); line-height:1.7; }
+    .spinner     { width:14px; height:14px; border:2px solid var(--surface2); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* Toast */
+    #toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface2); border:1px solid var(--border2); color:var(--text); padding:10px 20px; border-radius:20px; font-size:13px; opacity:0; transition:all .3s; pointer-events:none; z-index:100; }
+    #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">⬡</div>
+      <div><div class="logo-text">ContextCore</div><div class="logo-ver">v1.0.0</div></div>
+    </div>
+    <div class="pulse">
+      <div class="pulse-lbl">Live State</div>
+      <div class="pulse-row">
+        <div class="pulse-dot" id="pdot"></div>
+        <div class="pulse-txt" id="ptxt">Loading...</div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-sec">Overview</div>
+      <div class="nav-item active" data-page="dashboard"><span class="nav-icon">◉</span>Dashboard</div>
+      <div class="nav-item" data-page="timeline"><span class="nav-icon">⌇</span>Timeline</div>
+      <div class="nav-sec">Actions</div>
+      <div class="nav-item" data-page="mood"><span class="nav-icon">◎</span>Log Mood</div>
+      <div class="nav-item" data-page="mirror"><span class="nav-icon">◈</span>Mirror</div>
+    </nav>
+  </aside>
+
+  <main id="main">
+    <!-- Dashboard -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title" id="greeting">Good morning</div>
+      <div class="page-sub" id="date-sub">Loading your context...</div>
+      <div class="cards" id="cards"></div>
+      <div class="sec-label">Today's Activity</div>
+      <div class="tl-wrap"><div class="tl-chart" id="tl-chart"></div></div>
+      <div class="mirror-card">
+        <div class="mirror-hdr"><span style="font-size:20px">◈</span><span style="font-size:14px;font-weight:700;color:var(--accent)">Daily Mirror</span></div>
+        <div class="mirror-txt" id="mirror-txt"><div style="display:flex;align-items:center;gap:8px;color:var(--text3);font-size:12px;font-family:var(--mono)"><div class="spinner"></div>Generating...</div></div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="page" id="page-timeline">
+      <div class="page-title">Timeline</div>
+      <div class="page-sub">Your context over the last 24 hours</div>
+      <div class="tl-wrap" id="tl-detail"></div>
+    </div>
+
+    <!-- Mood -->
+    <div class="page" id="page-mood">
+      <div class="page-title">Log Mood</div>
+      <div class="page-sub">30 seconds. How are you feeling?</div>
+      <div class="mood-sec">
+        <div class="mood-lbl">Overall Mood</div>
+        <div class="mood-btns" id="mood-btns">
+          <button class="mood-btn" data-v="1">😩<span>Rough</span></button>
+          <button class="mood-btn" data-v="2">😔<span>Low</span></button>
+          <button class="mood-btn" data-v="3">😐<span>Okay</span></button>
+          <button class="mood-btn" data-v="4">🙂<span>Good</span></button>
+          <button class="mood-btn" data-v="5">🤩<span>Great</span></button>
+        </div>
+      </div>
+      <div class="mood-sec">
+        <div class="mood-lbl">Energy Level</div>
+        <div class="mood-btns" id="energy-btns">
+          <button class="mood-btn" data-v="1">💤<span>Drained</span></button>
+          <button class="mood-btn" data-v="2">🪫<span>Low</span></button>
+          <button class="mood-btn" data-v="3">🔋<span>Okay</span></button>
+          <button class="mood-btn" data-v="4">⚡<span>High</span></button>
+          <button class="mood-btn" data-v="5">🔥<span>Wired</span></button>
+        </div>
+      </div>
+      <div class="mood-sec">
+        <div class="mood-lbl">Note (optional)</div>
+        <textarea id="mood-note" placeholder="What's on your mind?"></textarea>
+      </div>
+      <button class="btn btn-primary" id="mood-submit">Save Check-in</button>
+    </div>
+
+    <!-- Mirror -->
+    <div class="page" id="page-mirror">
+      <div class="page-title">Daily Mirror</div>
+      <div class="page-sub">Your private AI debrief</div>
+      <div class="mirror-card">
+        <div class="mirror-hdr">
+          <span style="font-size:20px">◈</span>
+          <span style="font-size:14px;font-weight:700;color:var(--accent)">Today's Reflection</span>
+          <button class="btn btn-ghost" id="mirror-refresh" style="margin-left:auto;font-size:11px;padding:6px 12px">↻ Refresh</button>
+        </div>
+        <div class="mirror-txt" id="mirror-page-txt">Loading...</div>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+const cc = window.contextcore;
+let selMood = 0, selEnergy = 0;
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  setGreeting();
+  setupNav();
+  await loadDashboard();
+  setupMood();
+  setInterval(loadDashboard, 5 * 60 * 1000);
+}
+
+function setGreeting() {
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent =
+    h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('date-sub').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+}
+
+// ── Nav ───────────────────────────────────────────────────────────────────────
+function setupNav() {
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', () => nav(el.dataset.page));
+  });
+}
+function nav(page) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  document.getElementById(`page-${page}`).classList.add('active');
+  if (page === 'timeline') loadTimeline();
+  if (page === 'mirror')   loadMirrorPage();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  const ctx = await cc.getContext().catch(() => null);
+  if (!ctx) { document.getElementById('ptxt').textContent = 'No data yet'; return; }
+
+  document.getElementById('ptxt').textContent = getFocusLabel(ctx.focus_state);
+  document.getElementById('pdot').style.background = stateColor(ctx.focus_state);
+
+  document.getElementById('cards').innerHTML = [
+    { lbl:'Focus State',  emoji:focusEmoji(ctx.focus_state),  val:getFocusLabel(ctx.focus_state), score:ctx.focus_score,  sub:getSuggestion(ctx.focus_state), accent:stateColor(ctx.focus_state) },
+    { lbl:'Energy Level', emoji:energyEmoji(ctx.energy_level), val:cap(ctx.energy_level), score:ctx.energy_score, sub:`${ctx.deep_work_minutes_today} min deep work`, accent:'#00c4ff' },
+    { lbl:'Stress Level', emoji:stressEmoji(ctx.stress_category), val:cap(ctx.stress_category), score:10-ctx.stress_level, sub:`${ctx.meetings_today} meetings today`, accent: ctx.stress_level>=6?'#ff6b6b':'#6b6bff' }
+  ].map(c => `
+    <div class="card" style="--card-accent:${c.accent}">
+      <div class="card-lbl">${c.lbl}</div>
+      <div class="card-main"><span class="card-emoji">${c.emoji}</span><span class="card-val">${c.val}</span></div>
+      <div class="card-score">${c.score?.toFixed(1)}/10</div>
+      <div class="card-sub">${c.sub}</div>
+      <div class="bar"><div class="bar-fill" style="width:${c.score*10}%"></div></div>
+    </div>`).join('');
+
+  loadMirror();
+  loadMiniTimeline();
+}
+
+async function loadMiniTimeline() {
+  const history = await cc.getContextHistory(8).catch(() => []);
+  document.getElementById('tl-chart').innerHTML = history.map(s =>
+    `<div class="tl-bar" style="height:${Math.max(s.focus_score*8,4)}px;background:${stateColor(s.focus_state)}" title="${getFocusLabel(s.focus_state)}"></div>`
+  ).join('');
+}
+
+async function loadMirror() {
+  const m = await cc.getMirror().catch(() => null);
+  document.getElementById('mirror-txt').textContent =
+    m?.summary ?? 'No mirror yet — check back after a full day of tracking.';
+}
+
+// ── Timeline ─────────────────────────────────────────────────────────────────
+async function loadTimeline() {
+  const history = await cc.getContextHistory(24).catch(() => []);
+  document.getElementById('tl-detail').innerHTML = history.length === 0
+    ? '<p style="color:var(--text3);padding:20px;font-size:13px">No history yet</p>'
+    : history.reverse().map(s => `
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="width:80px;font-size:11px;font-family:var(--mono);color:var(--text3)">${new Date(s.inferred_at*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+        <span style="font-size:16px">${focusEmoji(s.focus_state)}</span>
+        <span style="flex:1;font-size:12px;color:var(--text2)">${getFocusLabel(s.focus_state)}</span>
+        <span style="font-size:11px;font-family:var(--mono);color:var(--text3)">${s.focus_score}/10</span>
+      </div>`).join('');
+}
+
+// ── Mood ─────────────────────────────────────────────────────────────────────
+function setupMood() {
+  document.querySelectorAll('#mood-btns .mood-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#mood-btns .mood-btn').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel'); selMood = parseInt(b.dataset.v);
+    });
+  });
+  document.querySelectorAll('#energy-btns .mood-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#energy-btns .mood-btn').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel'); selEnergy = parseInt(b.dataset.v);
+    });
+  });
+  document.getElementById('mood-submit').addEventListener('click', async () => {
+    if (!selMood || !selEnergy) { toast('Please select mood and energy'); return; }
+    const note = document.getElementById('mood-note').value;
+    await cc.logMood({ mood: selMood, energy: selEnergy, note, tags: [] });
+    toast('✓ Mood saved!');
+    selMood = 0; selEnergy = 0;
+    document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('sel'));
+    document.getElementById('mood-note').value = '';
+    nav('dashboard');
+    await loadDashboard();
+  });
+}
+
+// ── Mirror ────────────────────────────────────────────────────────────────────
+async function loadMirrorPage() {
+  const m = await cc.getMirror().catch(() => null);
+  document.getElementById('mirror-page-txt').textContent =
+    m?.summary ?? 'No mirror yet — check back after a full day of tracking.';
+}
+document.getElementById('mirror-refresh').addEventListener('click', loadMirrorPage);
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function focusEmoji(s)  { return {deep_work:'🎯',scattered:'🌀',in_meeting:'📅',break:'😴',unknown:'⚪'}[s]??'⚪'; }
+function energyEmoji(s) { return {high:'⚡',medium:'🔋',low:'🪫',unknown:'❓'}[s]??'🔋'; }
+function stressEmoji(s) { return {low:'😌',moderate:'😐',high:'😬',critical:'🔴'}[s]??'😐'; }
+function stateColor(s)  { return {deep_work:'#00f5c4',scattered:'#ffc46b',in_meeting:'#00c4ff',break:'#6b6bff',unknown:'#9090b0'}[s]??'#9090b0'; }
+function getFocusLabel(s) { return {deep_work:'Deep Focus',scattered:'Scattered',in_meeting:'In Meeting',break:'Break',unknown:'Warming up'}[s]??s; }
+function getSuggestion(s) { return {deep_work:"You're in the zone.",scattered:"Try a 25-min Pomodoro.",in_meeting:"Be present.",break:"Rest is productive.",unknown:"Keep working!"}[s]??''; }
+function cap(s) { return s ? s[0].toUpperCase()+s.slice(1) : ''; }
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+cc?.onNavigate?.(page => nav(page));
+init();
+</script>
+</body>
+</html>

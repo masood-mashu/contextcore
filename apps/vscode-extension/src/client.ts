@@ -59,20 +59,25 @@ function get(path: string, token: string): Promise<any> {
 function post(path: string, token: string, data: object): Promise<any> {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(data);
-    const req  = http.request({
+
+    // Debug log — remove after fixing
+    console.log('[ContextCore] POST', path, 'body:', body);
+
+    const req = http.request({
       hostname: API_BASE,
       port:     API_PORT,
       path,
       method:   'POST',
       headers:  {
-        'Content-Type':           'application/json',
-        'X-ContextCore-Token':    token,
-        'Content-Length':         Buffer.byteLength(body)
+        'Content-Type':        'application/json',
+        'X-ContextCore-Token': token,
+        'Content-Length':      Buffer.byteLength(body)
       }
     }, (res) => {
       let resBody = '';
       res.on('data', chunk => resBody += chunk);
       res.on('end', () => {
+        console.log('[ContextCore] POST response:', resBody);
         try { resolve(JSON.parse(resBody)); }
         catch (e) { reject(e); }
       });
@@ -115,5 +120,6 @@ export async function logMood(
   energy: number,
   note?: string
 ): Promise<void> {
-  await post('/mood', token, { mood, energy, note });
+  const data = { mood, energy, note: note ?? '' };
+  await post('/mood', token, data);
 }
