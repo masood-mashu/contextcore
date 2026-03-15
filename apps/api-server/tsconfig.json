@@ -8,6 +8,7 @@
   "include": ["src/**/*"],
   "references": [
     { "path": "../../packages/shared" },
-    { "path": "../../packages/database" }
+    { "path": "../../packages/database" },
+    { "path": "../context-engine" }
   ]
 }

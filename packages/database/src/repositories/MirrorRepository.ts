@@ -21,6 +21,15 @@ export class MirrorRepository {
     return this.rowToModel(result[0].columns, result[0].values[0]);
   }
 
+  async getByDate(date: string): Promise<Mirror | null> {
+    const db = await getDB();
+    const result = db.exec(
+      `SELECT * FROM mirrors WHERE date = '${date}' LIMIT 1`
+    );
+    if (!result.length || !result[0].values.length) return null;
+    return this.rowToModel(result[0].columns, result[0].values[0]);
+  }
+
   private rowToModel(columns: string[], values: any[]): Mirror {
     const obj: any = {};
     columns.forEach((col, i) => obj[col] = values[i]);
