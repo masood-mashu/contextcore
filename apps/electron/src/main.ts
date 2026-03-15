@@ -1,6 +1,6 @@
 import { app, BrowserWindow, Tray, Menu, ipcMain, Notification, nativeImage } from 'electron';
 import path from 'path';
-import { startEngine, computeAndSave } from '@contextcore/context-engine';
+import { computeAndSave } from '@contextcore/context-engine';
 import { ContextStateRepository, MoodRepository, MirrorRepository } from '@contextcore/database';
 import { closeDB } from '@contextcore/database';
 
@@ -16,7 +16,6 @@ let tray: Tray | null = null;
 app.whenReady().then(async () => {
   createWindow();
   setupTray();
-  startEngine();
 
   // Notify renderer every 15 min when context updates
   setInterval(async () => {

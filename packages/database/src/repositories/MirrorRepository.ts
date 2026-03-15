@@ -24,7 +24,8 @@ export class MirrorRepository {
   async getByDate(date: string): Promise<Mirror | null> {
     const db = await getDB();
     const result = db.exec(
-      `SELECT * FROM mirrors WHERE date = '${date}' LIMIT 1`
+      `SELECT * FROM mirrors WHERE date = ? LIMIT 1`,
+      [date]
     );
     if (!result.length || !result[0].values.length) return null;
     return this.rowToModel(result[0].columns, result[0].values[0]);

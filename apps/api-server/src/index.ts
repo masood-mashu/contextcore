@@ -59,7 +59,6 @@ app.use((req, res) => {
 // ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(API_PORT, '127.0.0.1', () => {
   console.log(`[API] ContextCore running at http://127.0.0.1:${API_PORT}`);
-  console.log(`[API] Token: cc-dev-token-2024`);
   console.log(`[API] Test: curl http://127.0.0.1:${API_PORT}/health`);
 
   // Start the context engine alongside the API server
